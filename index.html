@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MintChain Tree Data</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #results {
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>MintChain Tree Data</h1>
+    <button id="startButton">Start</button>
+    <div id="results"></div>
+
+    <script>
+        const mintLinkTree = 'https://www.mintchain.io/api/tree/steal/energy-list?id=';
+        const mintLinkId = 'https://www.mintchain.io/api/tree/user-info?treeid=';
+        let token = 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhZGRyZXNzIjoiMHg5MmU2OWQxOTNlOGY4MmZlMjE0MTc4Yjg3NmRmZmE3ODNjNGU2MWE2IiwidWlkIjo3MzgyNywiZXhwIjoxNzI0MjY2ODg5fQ.WOFhc09WotiNC6EoLl0o3gyBO9y1FnjyqM0B1DhPMB8';
+
+        let treeMin = 25332;
+        let treeMax = 74632;
+
+        let treeId = function randomIntFromInterval(min, max) {
+            return Math.floor(Math.random() * (max - min + 1) + min);
+        }
+
+        let mathResult = [];
+
+        for (let k = 0; k < 500; k++) {
+            mathResult[k] = treeId(treeMin, treeMax);
+        }
+
+        async function start() {
+            let results = [];
+
+            for (let i = 0; i < 5; i++) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                try {
+                    let parseIdResponse = await axios({
+                        method: 'get',
+                        url: mintLinkId + mathResult[i],
+                        headers: {
+                            'Authorization': token
+                        }
+                    });
+
+                    console.log('Response id:', mathResult[i], parseIdResponse.data.result.id);
+
+                    let parseTreeResponse = await axios({
+                        method: 'get',
+                        url: mintLinkTree + parseIdResponse.data.result.id,
+                        headers: {
+                            'Authorization': token
+                        }
+                    });
+
+                    let amount = (parseTreeResponse.data.result)[0].amount;
+                    console.log(amount);
+                    console.log(typeof parseTreeResponse.data.result);
+
+                    results.push({
+                        treeId: mathResult[i],
+                        userId: parseIdResponse.data.result.id,
+                        amount: amount
+                    });
+
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                }
+            }
+
+            console.log('Results:', results);
+            return results;
+        }
+
+        document.getElementById('startButton').addEventListener('click', async () => {
+            let results = await start();
+
+            results.sort((a, b) => b.amount - a.amount);
+            let resultText = results.map(result => `treeId: ${result.treeId}, userId: ${result.userId}, amount: ${result.amount}`).join('\n');
+            document.getElementById('results').textContent = resultText;
+        });
+    </script>
+</body>
+</html>
